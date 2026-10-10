@@ -1,0 +1,931 @@
+
+Open In Colab
+
+# Q1. Train a shallow (1 hidden layer) and deep (3 hidden layers) ANN on the first two classes of
+# the Iris dataset using two different learning rates (0.01 and 0.1), compare the final training
+# accuracy, plot the loss vs accuracy curve for the best model, and state which combination performs
+# best.
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+
+
+# 1. Load Iris dataset
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+# Use only first two classes: Setosa and Versicolor
+X = X[:100]
+y = y[:100]
+
+
+# 2. Scale the input data
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+
+# 3. Function to create ANN
+def create_model(deep=False):
+
+    model = tf.keras.Sequential()
+
+    # Input layer
+    model.add(tf.keras.layers.Input(shape=(4,)))
+
+    # Hidden layers
+    if deep:
+        # Deep ANN - 3 hidden layers
+        model.add(tf.keras.layers.Dense(16, activation='relu'))
+        model.add(tf.keras.layers.Dense(16, activation='relu'))
+        model.add(tf.keras.layers.Dense(16, activation='relu'))
+
+    else:
+        # Shallow ANN - 1 hidden layer
+        model.add(tf.keras.layers.Dense(16, activation='relu'))
+
+    # Output layer
+    model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+
+    return model
+
+
+# 4. Store results
+results = {}
+
+
+# 5. Train shallow and deep models
+for model_type in ["Shallow", "Deep"]:
+
+    for lr in [0.01, 0.1]:
+
+        print("\nTraining:", model_type,
+              "Learning Rate:", lr)
+
+        # Create model
+        model = create_model(deep=(model_type == "Deep"))
+
+        # SGD optimizer
+        optimizer = tf.keras.optimizers.SGD(
+            learning_rate=lr
+        )
+
+        # Compile
+        model.compile(
+            optimizer=optimizer,
+            loss='binary_crossentropy',
+            metrics=['accuracy']
+        )
+
+        # Train
+        history = model.fit(
+            X,
+            y,
+            epochs=30,
+            verbose=0
+        )
+
+        # Final accuracy
+        accuracy = history.history['accuracy'][-1]
+
+        print("Final Accuracy:", round(accuracy, 4))
+
+        # Store model and history
+        results[(model_type, lr)] = (
+            model,
+            history,
+            accuracy
+        )
+
+
+# 6. Find best combination
+best = max(
+    results,
+    key=lambda x: results[x][2]
+)
+
+best_model = results[best][0]
+best_history = results[best][1]
+best_accuracy = results[best][2]
+
+
+# 7. Display best result
+print("\n-----------------------------")
+print("BEST MODEL")
+print("-----------------------------")
+
+print("Model:", best[0])
+print("Learning Rate:", best[1])
+print("Accuracy:", round(best_accuracy, 4))
+
+
+# 8. Plot loss and accuracy
+plt.figure(figsize=(8, 5))
+
+plt.plot(
+    best_history.history['loss'],
+    label='Loss'
+)
+
+plt.plot(
+    best_history.history['accuracy'],
+    label='Accuracy'
+)
+
+plt.xlabel("Epoch")
+plt.ylabel("Value")
+
+plt.title(
+    "Best Model - Loss vs Accuracy"
+)
+
+plt.legend()
+plt.grid()
+
+plt.show()
+     
+Training: Shallow Learning Rate: 0.01
+Final Accuracy: 1.0
+
+Training: Shallow Learning Rate: 0.1
+Final Accuracy: 1.0
+
+Training: Deep Learning Rate: 0.01
+Final Accuracy: 0.99
+
+Training: Deep Learning Rate: 0.1
+Final Accuracy: 1.0
+
+-----------------------------
+BEST MODEL
+-----------------------------
+Model: Shallow
+Learning Rate: 0.01
+Accuracy: 1.0
+
+
+# Q1. Train a shallow (1 hidden layer) and deep (3 hidden layers) ANN on the first two classes of
+# the Iris dataset using Sigmoid and ReLU activations separately, compare the final training
+# accuracy, plot the loss vs accuracy curve for the best activation, and explain which activation
+# performs better.
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+
+
+# 1. Load Iris dataset
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+
+# 2. Use only first two classes
+X = X[:100]
+y = y[:100]
+
+
+# 3. Scale the data
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+
+# 4. Function to create ANN
+def create_model(deep, activation):
+
+    model = tf.keras.Sequential()
+
+    # Input layer
+    model.add(tf.keras.layers.Input(shape=(4,)))
+
+    # Hidden layers
+    if deep:
+        # Deep ANN - 3 hidden layers
+        model.add(tf.keras.layers.Dense(16, activation=activation))
+        model.add(tf.keras.layers.Dense(16, activation=activation))
+        model.add(tf.keras.layers.Dense(16, activation=activation))
+
+    else:
+        # Shallow ANN - 1 hidden layer
+        model.add(tf.keras.layers.Dense(16, activation=activation))
+
+    # Output layer
+    model.add(
+        tf.keras.layers.Dense(1, activation='sigmoid')
+    )
+
+    return model
+
+
+# 5. Store results
+results = {}
+
+
+# 6. Train models
+for model_type in ["Shallow", "Deep"]:
+
+    for activation in ["sigmoid", "relu"]:
+
+        print("\nTraining:", model_type,
+              "Activation:", activation)
+
+        # Create model
+        model = create_model(
+            deep=(model_type == "Deep"),
+            activation=activation
+        )
+
+        # Compile
+        model.compile(
+            optimizer='adam',
+            loss='binary_crossentropy',
+            metrics=['accuracy']
+        )
+
+        # Train
+        history = model.fit(
+            X,
+            y,
+            epochs=30,
+            verbose=0
+        )
+
+        # Final accuracy
+        accuracy = history.history['accuracy'][-1]
+
+        print(
+            "Final Accuracy:",
+            round(accuracy, 4)
+        )
+
+        # Store results
+        results[(model_type, activation)] = (
+            model,
+            history,
+            accuracy
+        )
+
+
+# 7. Find the best model
+best = max(
+    results,
+    key=lambda x: results[x][2]
+)
+
+best_model = results[best][0]
+best_history = results[best][1]
+best_accuracy = results[best][2]
+
+
+# 8. Display results
+print("\n==============================")
+print("FINAL RESULTS")
+print("==============================")
+
+for key, value in results.items():
+
+    print(
+        key[0],
+        "-",
+        key[1],
+        ":",
+        round(value[2], 4)
+    )
+
+
+print("\n==============================")
+print("BEST MODEL")
+print("==============================")
+
+print("Model:", best[0])
+print("Activation:", best[1])
+print("Accuracy:", round(best_accuracy, 4))
+
+
+# 9. Plot loss and accuracy
+plt.figure(figsize=(8, 5))
+
+plt.plot(
+    best_history.history['loss'],
+    label='Loss'
+)
+
+plt.plot(
+    best_history.history['accuracy'],
+    label='Accuracy'
+)
+
+plt.xlabel("Epoch")
+plt.ylabel("Value")
+
+plt.title(
+    "Best Model - Loss vs Accuracy"
+)
+
+plt.legend()
+plt.grid()
+
+plt.show()
+     
+Training: Shallow Activation: sigmoid
+Final Accuracy: 1.0
+
+Training: Shallow Activation: relu
+Final Accuracy: 0.95
+
+Training: Deep Activation: sigmoid
+Final Accuracy: 0.5
+
+Training: Deep Activation: relu
+Final Accuracy: 1.0
+
+==============================
+FINAL RESULTS
+==============================
+Shallow - sigmoid : 1.0
+Shallow - relu : 0.95
+Deep - sigmoid : 0.5
+Deep - relu : 1.0
+
+==============================
+BEST MODEL
+==============================
+Model: Shallow
+Activation: sigmoid
+Accuracy: 1.0
+
+
+# Q2. Using TensorFlow/Keras and tf.GradientTape, train a shallow ANN (1 hidden layer) on the
+# first two classes of the Iris dataset using two different optimizers (SGD and Adam), plot the
+# training loss curves, and explain which optimizer converges faster.
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+
+
+# 1. Load Iris dataset
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+
+# 2. Use first two classes
+X = X[:100]
+y = y[:100]
+
+
+# 3. Scale the input data
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+X = X.astype("float32")
+y = y.astype("float32").reshape(-1, 1)
+
+
+# 4. Create shallow ANN
+def create_model():
+
+    model = tf.keras.Sequential([
+        tf.keras.layers.Input(shape=(4,)),
+        tf.keras.layers.Dense(16, activation='relu'),
+        tf.keras.layers.Dense(1, activation='sigmoid')
+    ])
+
+    return model
+
+
+# 5. Train using GradientTape
+def train_model(optimizer):
+
+    model = create_model()
+
+    loss_function = tf.keras.losses.BinaryCrossentropy()
+
+    losses = []
+
+    # Training
+    for epoch in range(50):
+
+        with tf.GradientTape() as tape:
+
+            predictions = model(X, training=True)
+
+            loss = loss_function(y, predictions)
+
+        # Calculate gradients
+        gradients = tape.gradient(
+            loss,
+            model.trainable_variables
+        )
+
+        # Update weights
+        optimizer.apply_gradients(
+            zip(gradients, model.trainable_variables)
+        )
+
+        losses.append(float(loss))
+
+    return model, losses
+
+
+# 6. Train using SGD
+sgd = tf.keras.optimizers.SGD(
+    learning_rate=0.01
+)
+
+sgd_model, sgd_loss = train_model(sgd)
+
+
+# 7. Train using Adam
+adam = tf.keras.optimizers.Adam(
+    learning_rate=0.01
+)
+
+adam_model, adam_loss = train_model(adam)
+
+
+# 8. Print final losses
+print("Final SGD Loss:",
+      round(sgd_loss[-1], 4))
+
+print("Final Adam Loss:",
+      round(adam_loss[-1], 4))
+
+
+# 9. Plot training loss
+plt.figure(figsize=(8, 5))
+
+plt.plot(
+    sgd_loss,
+    label="SGD"
+)
+
+plt.plot(
+    adam_loss,
+    label="Adam"
+)
+
+plt.xlabel("Epoch")
+plt.ylabel("Training Loss")
+
+plt.title("SGD vs Adam")
+
+plt.legend()
+plt.grid()
+
+plt.show()
+     
+Final SGD Loss: 0.3595
+Final Adam Loss: 0.0078
+
+
+# Q2. Using TensorFlow/Keras and tf.GradientTape, train a deep ANN (3 hidden layers) on the
+# Breast Cancer dataset using the same hyperparameters with SGD and Adam. Plot the training loss
+# curves and explain why optimizer choice affects convergence in deeper networks.
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import load_breast_cancer
+from sklearn.preprocessing import StandardScaler
+
+
+# 1. Load Breast Cancer dataset
+data = load_breast_cancer()
+
+X = data.data
+y = data.target
+
+
+# 2. Scale the input data
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+X = X.astype("float32")
+y = y.astype("float32").reshape(-1, 1)
+
+
+# 3. Create Deep ANN
+def create_model():
+
+    model = tf.keras.Sequential([
+
+        tf.keras.layers.Input(shape=(30,)),
+
+        # Hidden layer 1
+        tf.keras.layers.Dense(
+            32,
+            activation='relu'
+        ),
+
+        # Hidden layer 2
+        tf.keras.layers.Dense(
+            16,
+            activation='relu'
+        ),
+
+        # Hidden layer 3
+        tf.keras.layers.Dense(
+            8,
+            activation='relu'
+        ),
+
+        # Output layer
+        tf.keras.layers.Dense(
+            1,
+            activation='sigmoid'
+        )
+    ])
+
+    return model
+
+
+# 4. Train using GradientTape
+def train_model(optimizer):
+
+    model = create_model()
+
+    loss_function = tf.keras.losses.BinaryCrossentropy()
+
+    losses = []
+
+    # Training
+    for epoch in range(50):
+
+        with tf.GradientTape() as tape:
+
+            predictions = model(
+                X,
+                training=True
+            )
+
+            loss = loss_function(
+                y,
+                predictions
+            )
+
+        # Calculate gradients
+        gradients = tape.gradient(
+            loss,
+            model.trainable_variables
+        )
+
+        # Update weights
+        optimizer.apply_gradients(
+            zip(
+                gradients,
+                model.trainable_variables
+            )
+        )
+
+        losses.append(float(loss))
+
+    return model, losses
+
+
+# 5. SGD optimizer
+sgd = tf.keras.optimizers.SGD(
+    learning_rate=0.01
+)
+
+sgd_model, sgd_loss = train_model(sgd)
+
+
+# 6. Adam optimizer
+adam = tf.keras.optimizers.Adam(
+    learning_rate=0.01
+)
+
+adam_model, adam_loss = train_model(adam)
+
+
+# 7. Display final losses
+print("Final SGD Loss:",
+      round(sgd_loss[-1], 4))
+
+print("Final Adam Loss:",
+      round(adam_loss[-1], 4))
+
+
+# 8. Plot training loss
+plt.figure(figsize=(8, 5))
+
+plt.plot(
+    sgd_loss,
+    label="SGD"
+)
+
+plt.plot(
+    adam_loss,
+    label="Adam"
+)
+
+plt.xlabel("Epoch")
+plt.ylabel("Training Loss")
+
+plt.title(
+    "SGD vs Adam - Deep ANN"
+)
+
+plt.legend()
+plt.grid()
+
+plt.show()
+     
+Final SGD Loss: 0.4692
+Final Adam Loss: 0.0115
+
+
+# Q3. Using TensorFlow/Keras, train a deep ANN (2 hidden layers) on the MNIST dataset once
+# without any regularization and once with dropout. Plot the training and validation loss curves and
+# explain how dropout reduces overfitting.
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+
+# 1. Load MNIST dataset
+(X_train, y_train), (X_test, y_test) = \
+    tf.keras.datasets.mnist.load_data()
+
+
+# 2. Normalize pixel values
+X_train = X_train / 255.0
+X_test = X_test / 255.0
+
+
+# 3. Function to create model
+def create_model(use_dropout=False):
+
+    model = tf.keras.Sequential()
+
+    # Input layer
+    model.add(
+        tf.keras.layers.Flatten(
+            input_shape=(28, 28)
+        )
+    )
+
+    # Hidden layer 1
+    model.add(
+        tf.keras.layers.Dense(
+            128,
+            activation='relu'
+        )
+    )
+
+    # Dropout
+    if use_dropout:
+        model.add(
+            tf.keras.layers.Dropout(0.5)
+        )
+
+    # Hidden layer 2
+    model.add(
+        tf.keras.layers.Dense(
+            64,
+            activation='relu'
+        )
+    )
+
+    # Dropout
+    if use_dropout:
+        model.add(
+            tf.keras.layers.Dropout(0.5)
+        )
+
+    # Output layer
+    model.add(
+        tf.keras.layers.Dense(
+            10,
+            activation='softmax'
+        )
+    )
+
+    return model
+
+
+# 4. Train model
+def train_model(use_dropout):
+
+    model = create_model(use_dropout)
+
+    model.compile(
+        optimizer='adam',
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy']
+    )
+
+    history = model.fit(
+        X_train,
+        y_train,
+        validation_data=(X_test, y_test),
+        epochs=10,
+        batch_size=128,
+        verbose=1
+    )
+
+    return model, history
+
+
+# 5. Train without Dropout
+print("\nTraining WITHOUT Dropout")
+
+model_without, history_without = \
+    train_model(False)
+
+
+# 6. Train with Dropout
+print("\nTraining WITH Dropout")
+
+model_with, history_with = \
+    train_model(True)
+
+
+# 7. Plot training loss
+plt.figure(figsize=(8, 5))
+
+plt.plot(
+    history_without.history['loss'],
+    label='Without Dropout - Training'
+)
+
+plt.plot(
+    history_with.history['loss'],
+    label='With Dropout - Training'
+)
+
+plt.xlabel("Epoch")
+plt.ylabel("Training Loss")
+
+plt.title("Training Loss")
+
+plt.legend()
+plt.grid()
+
+plt.show()
+
+
+# 8. Plot validation loss
+plt.figure(figsize=(8, 5))
+
+plt.plot(
+    history_without.history['val_loss'],
+    label='Without Dropout - Validation'
+)
+
+plt.plot(
+    history_with.history['val_loss'],
+    label='With Dropout - Validation'
+)
+
+plt.xlabel("Epoch")
+plt.ylabel("Validation Loss")
+
+plt.title("Validation Loss")
+
+plt.legend()
+plt.grid()
+
+plt.show()
+
+
+# 9. Final results
+print("\nFinal Results")
+
+print(
+    "Without Dropout - Training Accuracy:",
+    round(history_without.history['accuracy'][-1], 4)
+)
+
+print(
+    "Without Dropout - Validation Accuracy:",
+    round(history_without.history['val_accuracy'][-1], 4)
+)
+
+print(
+    "With Dropout - Training Accuracy:",
+    round(history_with.history['accuracy'][-1], 4)
+)
+
+print(
+    "With Dropout - Validation Accuracy:",
+    round(history_with.history['val_accuracy'][-1], 4)
+)
+     
+Downloading data from https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz
+11490434/11490434 ━━━━━━━━━━━━━━━━━━━━ 1s 0us/step
+
+Training WITHOUT Dropout
+/usr/local/lib/python3.13/dist-packages/keras/src/layers/reshaping/flatten.py:37: UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.
+  super().__init__(**kwargs)
+Epoch 1/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 6s 9ms/step - accuracy: 0.9078 - loss: 0.3242 - val_accuracy: 0.9489 - val_loss: 0.1696
+Epoch 2/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 7s 16ms/step - accuracy: 0.9601 - loss: 0.1344 - val_accuracy: 0.9642 - val_loss: 0.1198
+Epoch 3/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 8s 16ms/step - accuracy: 0.9726 - loss: 0.0927 - val_accuracy: 0.9711 - val_loss: 0.0930
+Epoch 4/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 3s 7ms/step - accuracy: 0.9785 - loss: 0.0707 - val_accuracy: 0.9707 - val_loss: 0.0948
+Epoch 5/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 4s 9ms/step - accuracy: 0.9824 - loss: 0.0568 - val_accuracy: 0.9737 - val_loss: 0.0812
+Epoch 6/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 9s 18ms/step - accuracy: 0.9861 - loss: 0.0464 - val_accuracy: 0.9754 - val_loss: 0.0777
+Epoch 7/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 5s 11ms/step - accuracy: 0.9886 - loss: 0.0373 - val_accuracy: 0.9764 - val_loss: 0.0784
+Epoch 8/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 3s 7ms/step - accuracy: 0.9905 - loss: 0.0307 - val_accuracy: 0.9763 - val_loss: 0.0790
+Epoch 9/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 7s 15ms/step - accuracy: 0.9923 - loss: 0.0262 - val_accuracy: 0.9772 - val_loss: 0.0771
+Epoch 10/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 7s 14ms/step - accuracy: 0.9935 - loss: 0.0223 - val_accuracy: 0.9778 - val_loss: 0.0789
+
+Training WITH Dropout
+Epoch 1/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 9s 16ms/step - accuracy: 0.7627 - loss: 0.7620 - val_accuracy: 0.9297 - val_loss: 0.2347
+Epoch 2/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 9s 18ms/step - accuracy: 0.8946 - loss: 0.3702 - val_accuracy: 0.9482 - val_loss: 0.1738
+Epoch 3/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 6s 12ms/step - accuracy: 0.9168 - loss: 0.2978 - val_accuracy: 0.9564 - val_loss: 0.1453
+Epoch 4/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 11s 15ms/step - accuracy: 0.9276 - loss: 0.2619 - val_accuracy: 0.9609 - val_loss: 0.1286
+Epoch 5/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 7s 8ms/step - accuracy: 0.9334 - loss: 0.2384 - val_accuracy: 0.9635 - val_loss: 0.1230
+Epoch 6/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 3s 7ms/step - accuracy: 0.9395 - loss: 0.2199 - val_accuracy: 0.9679 - val_loss: 0.1125
+Epoch 7/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 4s 8ms/step - accuracy: 0.9432 - loss: 0.2024 - val_accuracy: 0.9682 - val_loss: 0.1153
+Epoch 8/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 4s 9ms/step - accuracy: 0.9453 - loss: 0.1939 - val_accuracy: 0.9689 - val_loss: 0.1111
+Epoch 9/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 4s 7ms/step - accuracy: 0.9468 - loss: 0.1867 - val_accuracy: 0.9700 - val_loss: 0.1050
+Epoch 10/10
+469/469 ━━━━━━━━━━━━━━━━━━━━ 4s 9ms/step - accuracy: 0.9486 - loss: 0.1797 - val_accuracy: 0.9715 - val_loss: 0.1018
+
+
+Final Results
+Without Dropout - Training Accuracy: 0.9935
+Without Dropout - Validation Accuracy: 0.9778
+With Dropout - Training Accuracy: 0.9486
+With Dropout - Validation Accuracy: 0.9715
+
+# Q3. Train a deep ANN (2 hidden layers) on the MNIST dataset with and without batch
+# normalization. Plot validation accuracy across epochs and justify how batch normalization
+# improves training stability and convergence.
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+# 1. Load MNIST dataset
+(X_train, y_train), (X_test, y_test) = tf.keras.datasets.mnist.load_data()
+
+# 2. Normalize pixel values
+X_train = X_train.astype("float32") / 255.0
+X_test = X_test.astype("float32") / 255.0
+
+
+# 3. Create ANN model
+def create_model(use_bn=False):
+
+    model = tf.keras.Sequential()
+
+    # Input layer
+    model.add(tf.keras.layers.Flatten(input_shape=(28, 28)))
+
+    # Hidden layer 1
+    model.add(tf.keras.layers.Dense(128, activation="relu"))
+
+    # Batch Normalization
+    if use_bn:
+        model.add(tf.keras.layers.BatchNormalization())
+
+    # Hidden layer 2
+    model.add(tf.keras.layers.Dense(64, activation="relu"))
+
+    # Batch Normalization
+    if use_bn:
+        model.add(tf.keras.layers.BatchNormalization())
+
+    # Output layer
+    model.add(tf.keras.layers.Dense(10, activation="softmax"))
+
+    return model
+
+
+# 4. Train model
+def train_model(use_bn):
+
+    model = create_model(use_bn)
+
+    model.compile(
+        optimizer="adam",
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"]
+    )
+
+    histor
